@@ -1,0 +1,67 @@
+---
+- hosts: all
+  become: true
+  become_method: sudo
+  tasks:
+# First we want to prevent any known bad addresses from sending any traffic
+# We have to build out the list first
+  - name: Create an ipset for blocked addresses
+    firewalld_ipset:
+      name: blocklist
+      state: present
+      permanent: true
+      immediate: true
+      addresses:
+        - 192.168.10.1
+        - 10.0.19.72
+        - 192.168.10.5
+
+# Then add that list to the "block" zone
+  - name: Block inbound traffic from the blocklist IPSet
+    firewalld:
+      source: 'ipset:blocklist'
+      zone: block
+      state: enabled
+      immediate: true
+      permanent: true
+
+# Next we are creating an authorized client list for our development service
+# First we have to build out the list of clients
+  - name: Create an authorized client list by ip
+    firewalld_ipset:
+      name: authlist
+      state: present
+      permanent: true
+      immediate: true
+      addresses:
+        - 192.168.86.29
+
+# Now we allow those clients to be able to connect to services on the internal
+# zone.
+  - name: allow traffic on the internal zone for the authlist
+    firewalld:
+      source: 'ipset:authlist'
+      zone: internal
+      state: enabled
+      immediate: true
+      permanent: true
+
+# Finally we expose our development service on port 3000 over the internal
+# zone, allowing our group of authorized clients to be able to reach it.
+  - name: expose port 3000 on internal zone
+    firewalld:
+      port: 3000/tcp
+      zone: internal
+      state: enabled
+      immediate: true
+      permanent: true
+
+  - name: Remove unneeded ipsets
+    firewalld_ipset:
+      name: "{{ item }}"
+      state: absent
+      permanent: true
+      immediate: true
+    with_items:
+      - testlist
+      - TestSet
