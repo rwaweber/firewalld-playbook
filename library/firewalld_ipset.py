@@ -17,7 +17,7 @@ def run():
         immediate=dict(type='bool', required=False, default=False),
         addresses=dict(type='list', required=False)
     )
-    
+
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=True
@@ -52,7 +52,7 @@ def run():
 
     # Creating a new ipset because the one proposed in the module declaration
     # does not exist already.
-    elif module.params['name'] not in sets and module.params['state'] == 'present': 
+    elif module.params['name'] not in sets and module.params['state'] == 'present':
         client_ipset_config = config.addIPSet(module.params['name'], settings)
         original_entries = client_ipset_config.getEntries()
         client_ipset_config.setEntries(module.params['addresses'])
