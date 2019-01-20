@@ -9,12 +9,27 @@
     firewalld_ipset:
       name: blocklist
       state: present
+      settype: "hash:ip"
       permanent: true
       immediate: true
       addresses:
         - 192.168.10.1
         - 10.0.19.72
         - 192.168.10.5
+    register: output
+
+  - debug:
+      msg: "{{ output }}"
+
+  - name: Create an ipset for blocked mac addresses
+    firewalld_ipset:
+      name: blocklist-mac
+      state: absent
+      settype: "hash:mac"
+      permanent: true
+      immediate: true
+      addresses:
+        - f4:5c:89:9b:dc:c9
 
 # Then add that list to the "block" zone
   - name: Block inbound traffic from the blocklist IPSet
@@ -31,6 +46,7 @@
     firewalld_ipset:
       name: authlist
       state: present
+      settype: "hash:ip"
       permanent: true
       immediate: true
       addresses:
@@ -60,6 +76,7 @@
     firewalld_ipset:
       name: "{{ item }}"
       state: absent
+      settype: "hash:ip"
       permanent: true
       immediate: true
     with_items:
